@@ -3,6 +3,7 @@ import re
 import traceback
 import types
 from importlib import import_module, sys
+import time
 
 from Jumpscale import j
 
@@ -89,7 +90,8 @@ class TestTools:
             raise AttributeError(f"Test {test_name} is not found")
 
     def _run(self, test_name=""):
-        self.results = {"summary": {"passes": 0, "failures": 0, "errors": 0, "skips": 0}, "testcases": []}
+        self.results = {"summary": {"passes": 0, "failures": 0, "errors": 0, "skips": 0}, "testcases": [], "time_taken": 0}
+        start_time = time.time()
         for module in self.modules:
             self.before_all(module)
             if test_name:
@@ -100,6 +102,9 @@ class TestTools:
                         self.run_test(method, module)
 
             self.after_all(module)
+        end_time = time.time()
+        time_taken = end_time - start_time
+        self.results["time_taken"] = '{0:.5f}'.format(time_taken)
         self.report()
         if (self.results["summary"]["failures"] > 0) or (self.results["summary"]["errors"] > 0):
             return 1
@@ -169,14 +174,16 @@ class TestTools:
     def report(self):
         length = 70
         for result in self.results["testcases"]:
-            msg = result["msg"].split(": ")[1]
+            msg = result["msg"].split(": ")
+            msg = ': '.join(msg[1:])
             print(msg)
-            error = result["error"].split(": ")[1]
+            error = result["error"].split(": ")
+            error = ': '.join(error[1:])
             print(error)
 
         print("-" * length)
         all_tests = sum(self.results["summary"].values())
-        print(f"Ran {all_tests} tests\n\n")
+        print(f"Ran {all_tests} tests in {self.results['time_taken']}\n\n")
         result_log = j.core.tools.log(
             "{RED}%s Failed, {YELLOW}%s Errored, {GREEN}%s Passed, {BLUE}%s Skipped"
             % (
