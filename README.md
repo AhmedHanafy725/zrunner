@@ -34,5 +34,11 @@ This method runs once after running the tests.
 
 ```bash
 poetry shell
-zrunner <test path>
+zrunner <tests path>
 ```
+
+Check `zrunner --help` for more running options
+
+## Run Summary
+
+![summary](assets/summary.png)
