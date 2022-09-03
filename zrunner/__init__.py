@@ -7,9 +7,6 @@ import types
 from cmath import log
 from importlib import import_module, sys
 
-from colorlog import ColoredFormatter
-
-LOGFORMAT = "%(log_color)s%(message)s%(reset)s"
 COLORS = {
     "RED": "\033[1;31m",
     "BLUE": "\033[1;34m",
@@ -33,12 +30,12 @@ class Skip(Exception):
     """Raise for skipping test"""
 
 
-class ZRun:
+class ZRunner:
     __show_tests_report = True
     _modules = []
     _results = {"summary": {"passes": 0, "failures": 0, "errors": 0, "skips": 0}, "testcases": [], "time_taken": 0}
 
-    def __init__(self, log_level=logging.INFO, xml_report=False, xml_path="test.xml", xml_testsuite_name="Jsx_Runner"):
+    def __init__(self, log_level=logging.INFO, xml_report=False, xml_path="test.xml", xml_testsuite_name="Zero Runner"):
         self._xml_report = xml_report
         self._xml_path = xml_path
         self._xml_testsuite_name = xml_testsuite_name
@@ -47,18 +44,11 @@ class ZRun:
 
     def setup_logs(self):
         logging.root.setLevel(self.log_level)
-        formatter = ColoredFormatter(LOGFORMAT)
-        stream = logging.StreamHandler()
-        stream.setLevel(self.log_level)
-        stream.setFormatter(formatter)
         self.logger = logging.getLogger("pythonConfig")
         self.logger.setLevel(self.log_level)
-        self.logger.addHandler(stream)
 
-    def log(self, msg):
-        import ipdb; ipdb.set_trace()
-
-        self.logger.log(50, msg)
+    def log(self, log_level, msg):
+        self.logger.log(log_level, msg)
 
     @staticmethod
     def _skip(msg):
@@ -113,6 +103,15 @@ class ZRun:
             "time_taken": 0,
         }
 
+    def _list_python_files(self, path):
+        files_paths = []
+        for root, _, files in os.walk(path):
+            for name in files:
+                if name.endswith(".py"):
+                    file_path = os.path.join(root, name)
+                    files_paths.append(file_path)
+        return files_paths
+
     def _discover_from_path(self, path, test_name=""):
         """Discover and get modules that contains tests in a certain path.
 
@@ -129,8 +128,8 @@ class ZRun:
                 self._import_file_module(path, parent_path)
         else:
             sys.path.insert(0, path)
-            files_pathes = j.sal.fs.listPyScriptsInDir(path=path, recursive=False)
-            for file_path in files_pathes:
+            files_paths = self._list_python_files(path)
+            for file_path in files_paths:
                 file_path_base = os.path.basename(file_path)
                 if not file_path_base.startswith("_"):
                     self._import_file_module(file_path, path)
@@ -227,7 +226,7 @@ class ZRun:
             test = getattr(module, method)
             if not isinstance(test, (types.FunctionType, types.MethodType)):
                 return
-            print(test_name, "...")
+            self.log(logging.DEBUG, f"{test_name}...")
             if not self._is_skipped(test):
                 self._before(module)
             test()
@@ -265,13 +264,13 @@ class ZRun:
             try:
                 before_all()
             except Skip as sk:
-                print(f"{module_location} ...")
+                self.log(logging.DEBUG, f"{module_location} ...")
                 skip_msg = f"SkipTest: {sk.args[0]}\n"
                 self._add_skip(module_location, skip_msg)
                 return True
             except BaseException as error:
                 self._add_helper_error(module_location, error)
-                print("error\n")
+                self.log(logging.DEBUG, "error\n")
 
         return False
 
@@ -287,7 +286,7 @@ class ZRun:
                 after_all()
             except BaseException as error:
                 self._add_helper_error(module_location, error)
-                print("error\n")
+                self.log(logging.DEBUG, "error\n")
 
     def _before(self, module):
         """Get and execute before in a module if it is exist.
@@ -310,7 +309,7 @@ class ZRun:
                 after()
             except BaseException as error:
                 self._add_helper_error(test_name, error)
-                print("error\n")
+                self.log(logging.DEBUG, "error\n")
 
     def _is_skipped(self, test):
         """Check if the test is skipped.
@@ -326,7 +325,7 @@ class ZRun:
         self._results["summary"]["passes"] += 1
         result = {"name": test_name, "status": "passed", "time": time_taken}
         self._results["testcases"].append(result)
-        print("ok\n")
+        self.log(logging.DEBUG, "ok\n")
 
     def _add_failure(self, test_name, error):
         """Add a failed test.
@@ -338,10 +337,8 @@ class ZRun:
         length = len(test_name) + _FAIL_LENGTH
         msg = "=" * length + f"\nFAIL: {test_name}\n" + "-" * length
         str_msg = "{RED}{msg}{RESET}".format(msg=msg, **COLORS)
-        # log_error = j.core.tools.log("", exception=error, stdout=False)
-        # str_error = j.core.tools.log2str(log_error)
-        str_error = "{RED}{msg}{RESET}".format(msg=error, **COLORS)
         trace_back = traceback.format_exc()
+        str_error = "{RED}{msg}{RESET}".format(msg=f"{error}\n{trace_back}", **COLORS)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -351,7 +348,7 @@ class ZRun:
             "time": time_taken,
         }
         self._results["testcases"].append(result)
-        print("fail\n")
+        self.log(logging.DEBUG, "fail\n")
 
     def _add_error(self, test_name, error):
         """Add a errored test.
@@ -363,9 +360,8 @@ class ZRun:
         length = len(test_name) + _ERROR_LENGTH
         msg = "=" * length + f"\nERROR: {test_name}\n" + "-" * length
         str_msg = "{YELLOW}{msg}{RESET}".format(msg=msg, **COLORS)
-
         trace_back = traceback.format_exc()
-        str_error = "{RED}{msg}{RESET}".format(msg=f"{error}\n{trace_back}", **COLORS)
+        str_error = "{YELLOW}{msg}{RESET}".format(msg=f"{error}\n{trace_back}", **COLORS)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -375,7 +371,7 @@ class ZRun:
             "time": time_taken,
         }
         self._results["testcases"].append(result)
-        print("error\n")
+        self.log(logging.DEBUG, "error\n")
 
     def _add_skip(self, test_name, skip_msg):
         """Add a skipped test.
@@ -397,7 +393,7 @@ class ZRun:
             "time": time_taken,
         }
         self._results["testcases"].append(result)
-        print("skip\n")
+        self.log(logging.DEBUG, "skip\n")
 
     def _add_helper_error(self, test_name, error):
         """Add error that happens in a helper method (before_all, after, after_all).
@@ -436,25 +432,22 @@ class ZRun:
                 continue
 
             msg = result["msg"]
-            print(msg)
+            self.log(logging.ERROR, msg)
             error = result["error"]
-            print(error)
+            self.log(logging.ERROR, error)
 
-
-        print("-" * 70)  # line To print the summary
+        self.log(logging.CRITICAL, "-" * 70)  # line To print the summary
         all_tests = sum(results["summary"].values())
         time_taken = "{0:.5f}".format(results["time_taken"])
-        print(f"Ran {all_tests} tests in {time_taken}\n\n")
-        result_str = (
-            "{RED}{failures} Failed, {YELLOW}{errors} Errored, {GREEN}{passes} Passed, {BLUE}{skips} Skipped".format(
-                failures=results["summary"]["failures"],
-                errors=results["summary"]["errors"],
-                passes=results["summary"]["passes"],
-                skips=results["summary"]["skips"],
-                **COLORS,
-            )
+        self.log(logging.CRITICAL, f"Ran {all_tests} tests in {time_taken}\n\n")
+        result_str = "{RED}{failures} Failed, {YELLOW}{errors} Errored, {GREEN}{passes} Passed, {BLUE}{skips} Skipped{RESET}".format(
+            failures=results["summary"]["failures"],
+            errors=results["summary"]["errors"],
+            passes=results["summary"]["passes"],
+            skips=results["summary"]["skips"],
+            **COLORS,
         )
-        print(result_str, "\u001b[0m")
+        self.log(logging.CRITICAL, result_str)
         self._generate_xml(results)
 
     def _add_to_full_results(self):
@@ -505,11 +498,11 @@ class ZRun:
             data = xmltodict.unparse(all_results)
             with open(path, "w") as f:
                 f.write(data)
-            print("-" * 70)
+            self.log(logging.CRITICAL, "-" * 70)
             if not os.path.isabs(path):
                 path = os.path.join(os.getcwd(), path)
-            print(f"XML file has been generated in {path}")
-            print("-" * 70)
+            self.log(logging.CRITICAL, f"XML file has been generated in {path}")
+            self.log(logging.CRITICAL, "-" * 70)
 
 
-skip = TestTools._skip
+skip = ZRunner._skip

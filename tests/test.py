@@ -1,4 +1,4 @@
-from test_runner import skip
+from zrunner import skip
 
 def before():
     print("before")
