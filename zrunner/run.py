@@ -50,6 +50,3 @@ def run():
         t.run_from_path(splits[0], splits[1])
     else:
         raise Exception("Invalid path")
-
-
-run()

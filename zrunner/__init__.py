@@ -232,14 +232,14 @@ class ZRunner:
             test()
             self._add_success(test_name)
         except AssertionError as error:
-            self._add_failure(test_name, error)
+            self._add_failure(test_name)
 
         except Skip as sk:
             skip_msg = f"SkipTest: {sk.args[0]}\n"
             self._add_skip(test_name, skip_msg)
 
         except BaseException as error:
-            self._add_error(test_name, error)
+            self._add_error(test_name)
 
         if not self._is_skipped(test):
             self._after(module, test_name)
@@ -285,7 +285,7 @@ class ZRunner:
             try:
                 after_all()
             except BaseException as error:
-                self._add_helper_error(module_location, error)
+                self._add_helper_error(module_location)
                 self.log(logging.DEBUG, "error\n")
 
     def _before(self, module):
@@ -308,7 +308,7 @@ class ZRunner:
             try:
                 after()
             except BaseException as error:
-                self._add_helper_error(test_name, error)
+                self._add_helper_error(test_name)
                 self.log(logging.DEBUG, "error\n")
 
     def _is_skipped(self, test):
@@ -327,7 +327,7 @@ class ZRunner:
         self._results["testcases"].append(result)
         self.log(logging.DEBUG, "ok\n")
 
-    def _add_failure(self, test_name, error):
+    def _add_failure(self, test_name):
         """Add a failed test.
 
         :param error: test exception error.
@@ -338,7 +338,7 @@ class ZRunner:
         msg = "=" * length + f"\nFAIL: {test_name}\n" + "-" * length
         str_msg = "{RED}{msg}{RESET}".format(msg=msg, **COLORS)
         trace_back = traceback.format_exc()
-        str_error = "{RED}{msg}{RESET}".format(msg=f"{error}\n{trace_back}", **COLORS)
+        str_error = "{RED}{msg}{RESET}".format(msg=f"\n{trace_back}", **COLORS)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -350,7 +350,7 @@ class ZRunner:
         self._results["testcases"].append(result)
         self.log(logging.DEBUG, "fail\n")
 
-    def _add_error(self, test_name, error):
+    def _add_error(self, test_name):
         """Add a errored test.
 
         :param error: test exception error.
@@ -361,7 +361,8 @@ class ZRunner:
         msg = "=" * length + f"\nERROR: {test_name}\n" + "-" * length
         str_msg = "{YELLOW}{msg}{RESET}".format(msg=msg, **COLORS)
         trace_back = traceback.format_exc()
-        str_error = "{YELLOW}{msg}{RESET}".format(msg=f"{error}\n{trace_back}", **COLORS)
+        print(trace_back)
+        str_error = "{YELLOW}{msg}{RESET}".format(msg=f"\n{trace_back}", **COLORS)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -395,7 +396,7 @@ class ZRunner:
         self._results["testcases"].append(result)
         self.log(logging.DEBUG, "skip\n")
 
-    def _add_helper_error(self, test_name, error):
+    def _add_helper_error(self, test_name):
         """Add error that happens in a helper method (before_all, after, after_all).
 
         :param error: test exception error.
@@ -405,7 +406,7 @@ class ZRunner:
         msg = "=" * length + f"\nERROR: {test_name}\n" + "-" * length
         str_msg = "{YELLOW}{msg}{RESET}".format(msg=msg, **COLORS)
         trace_back = traceback.format_exc()
-        str_error = "{RED}{msg}{RESET}".format(msg=f"{error}\n{trace_back}", **COLORS)
+        str_error = "{RED}{msg}{RESET}".format(msg=f"\n{trace_back}", **COLORS)
         result = {
             "name": test_name,
             "traceback": trace_back,
