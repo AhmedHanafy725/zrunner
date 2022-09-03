@@ -338,7 +338,7 @@ class ZRunner:
         msg = "=" * length + f"\nFAIL: {test_name}\n" + "-" * length
         str_msg = "{RED}{msg}{RESET}".format(msg=msg, **COLORS)
         trace_back = traceback.format_exc()
-        str_error = "{RED}{msg}{RESET}".format(msg=f"\n{trace_back}", **COLORS)
+        str_error = self._color_traceback(trace_back)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -361,8 +361,7 @@ class ZRunner:
         msg = "=" * length + f"\nERROR: {test_name}\n" + "-" * length
         str_msg = "{YELLOW}{msg}{RESET}".format(msg=msg, **COLORS)
         trace_back = traceback.format_exc()
-        print(trace_back)
-        str_error = "{YELLOW}{msg}{RESET}".format(msg=f"\n{trace_back}", **COLORS)
+        str_error = self._color_traceback(trace_back)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -406,7 +405,7 @@ class ZRunner:
         msg = "=" * length + f"\nERROR: {test_name}\n" + "-" * length
         str_msg = "{YELLOW}{msg}{RESET}".format(msg=msg, **COLORS)
         trace_back = traceback.format_exc()
-        str_error = "{RED}{msg}{RESET}".format(msg=f"\n{trace_back}", **COLORS)
+        str_error = self._color_traceback(trace_back)
         result = {
             "name": test_name,
             "traceback": trace_back,
@@ -504,6 +503,16 @@ class ZRunner:
                 path = os.path.join(os.getcwd(), path)
             self.log(logging.CRITICAL, f"XML file has been generated in {path}")
             self.log(logging.CRITICAL, "-" * 70)
+
+    def _color_traceback(self, traceback_text):
+        import sys, traceback
+        from pygments import highlight
+        from pygments.lexers import get_lexer_by_name
+        from pygments.formatters import TerminalFormatter
+
+        lexer = get_lexer_by_name("pytb" if sys.version_info.major < 3 else "py3tb")
+        formatter = TerminalFormatter()
+        return highlight(traceback_text, lexer, formatter)
 
 
 skip = ZRunner._skip

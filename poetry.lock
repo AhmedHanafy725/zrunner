@@ -1,4 +1,15 @@
 [[package]]
+name = "pygments"
+version = "2.13.0"
+description = "Pygments is a syntax highlighting package written in Python."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+plugins = ["importlib-metadata"]
+
+[[package]]
 name = "xmltodict"
 version = "0.13.0"
 description = "Makes working with XML feel like you are working with JSON"
@@ -9,7 +20,8 @@ python-versions = ">=3.4"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "88e7498843459e84256674425dc9bf5f3fc6933e3f7fc6fff6e9bd51ca222ea0"
+content-hash = "04c1aad08e358a36e44dce0707baa21f1c42544ad28c5979188f4ff1494642a1"
 
 [metadata.files]
+pygments = []
 xmltodict = []

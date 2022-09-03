@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "zrunner"
 version = "0.1.0"
-packages = [{ include = "zrunner" }]
 description = "this is a test runner"
 authors = ["ahmedhanafy725 <ahmed.hanafy725@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 xmltodict = "^0.13.0"
+Pygments = "^2.13.0"
 
 [tool.poetry.scripts]
 zrunner = "zrunner.run:run"
