@@ -1,4 +1,8 @@
-from test_runner import TestTools
+from zrun import ZRun
+import sys
 
-t = TestTools()
-t.run_from_path("/sandbox/code/github/threefoldtech/test_runner/test.py")
+def run():
+    t = ZRun()
+    t.run_from_path(sys.argv[1])
+
+run()
