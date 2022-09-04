@@ -1,6 +1,6 @@
 # ZRunner
 
-It's a testing framework and a runner.
+It's a testing framework and test runner.
 
 ## Installation
 
